@@ -1,0 +1,7 @@
+{
+	"editor.autoClosingQuotes": "languageDefined",
+	"html.autoCreateQuotes": true,
+	"editor.autoSurround": "never",
+	"files.autoSaveWhenNoErrors": true,
+	"editor.formatOnSave": false
+}
