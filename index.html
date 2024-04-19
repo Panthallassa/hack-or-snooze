@@ -65,39 +65,51 @@
 
 		<section class="story-form-container">
 			<form id="story-form">
-				<label for="author">author</label>
+
+				<br/>
+				
+				<label id='author-label' class="story-form-labels" for="author">author</label>
 				<input
 					type="text"
+					class="story-form-inputs"
 					id="author"
 					placeholder="author name"
 				/>
 
-				<label for="url-input">url</label>
+				<br/>
+
+				<label class="story-form-labels" for="url-input">url</label>
 				<input
 					type="text"
+					class="story-form-inputs"
 					id="url-input"
 					placeholder="story url"
 				/>
 
-				<label for="title">title</label>
+				<br/>
+
+				<label class="story-form-labels" for="title">title</label>
 				<input
 					type="text"
+					class="story-form-inputs"
 					id="title"
 					placeholder="story title"
 				/>
 
+				<br/>
+
 				<button id="story-submit">submit</button>
 			</form>
-			<hr />
 		</section>
 
 		<!-- area for stories (all stories, user stories, favorites) -->
 		<section class="stories-container container">
 			<!-- loading message (removed by JS after stories loaded) -->
 			<div id="stories-loading-msg">Loading&hellip;</div>
-			<ol id="favorite-stories-list"></ol>
 			<!-- List of all stories -->
 			<ol id="all-stories-list" class="stories-list"></ol>
+			<ol id="favorite-stories-list" class="stories-list"></ol>
+			<ol id="own-stories-list" class="stories-list"></ol>
 		</section>
 
 		<!-- Login and signup forms -->

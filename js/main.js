@@ -6,13 +6,23 @@ const $body = $("body");
 
 const $storiesLoadingMsg = $("#stories-loading-msg");
 const $allStoriesList = $("#all-stories-list");
-
+//added favStoriesList
+const $favStoriesList = $("#favorite-stories-list");
+//added ownStoriesList
+const $ownStoriesList = $("#own-stories-list");
+//added story container
+const $storyContainer = $('.stories-container');
+//added story form
+const $storyForm = $('.story-form-container');
 const $loginForm = $("#login-form");
 const $signupForm = $("#signup-form");
 
 const $navLogin = $("#nav-login");
+//added userStories
+const $userStories = $('#my-stories');
 const $navUserProfile = $("#nav-user-profile");
 const $navLogOut = $("#nav-logout");
+
 
 /** To make it easier for individual components to show just themselves, this
  * is a useful function that hides pretty much everything on the page. After
@@ -21,6 +31,10 @@ const $navLogOut = $("#nav-logout");
 
 function hidePageComponents() {
   const components = [
+    //added more components
+    $storyForm,
+    $ownStoriesList,
+    $favStoriesList,
     $allStoriesList,
     $loginForm,
     $signupForm,
@@ -37,8 +51,31 @@ async function start() {
   await checkForRememberedUser();
   await getAndShowStoriesOnStart();
 
+  //load favorites from local storage
+  const currentUserFavorites = loadFavoritesFromLocalStorage();
+  const currentOwnStories = loadOwnStoriesFromLocalStorage();
+
   // if we got a logged-in user
-  if (currentUser) updateUIOnUserLogin();
+  if (currentUser) {
+    //initialize user favorites
+    if (currentUserFavorites.length > 0) {
+    currentUser.favorites = currentUserFavorites;
+    }
+    //initalize own stories
+    if (currentOwnStories.length > 0) {
+      currentUser.ownStories = currentOwnStories;
+    }
+
+    updateUIOnUserLogin();
+  } else {
+    //hide elements I dont't want the user to see if not logged in
+    $('.nav-left').css('display', 'none');
+    $storyContainer.hide();
+    $storyForm.hide();
+    //show these two forms
+    $loginForm.show();
+    $signupForm.show();
+  }
 }
 
 // Once the DOM is entirely loaded, begin the app

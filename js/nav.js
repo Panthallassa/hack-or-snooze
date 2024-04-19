@@ -10,6 +10,9 @@ function navAllStories(evt) {
   console.debug("navAllStories", evt);
   hidePageComponents();
   putStoriesOnPage();
+  //hide submit form
+  const submitStoryForm = document.querySelector(".story-form-container");
+  submitStoryForm.style.display = 'none';
 }
 
 $body.on("click", "#nav-all", navAllStories);
@@ -36,6 +39,7 @@ function updateNavOnLogin() {
 }
 //function to show the story submit form when nav link is clicked
 function navSubmitClick() {
+  hidePageComponents();
 $(".story-form-container").css('display', 'block');
 }
 

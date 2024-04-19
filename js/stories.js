@@ -19,13 +19,28 @@ async function getAndShowStoriesOnStart() {
  * Returns the markup for the story.
  */
 
+//function to create like button
+function generateLikeButton(story) {
+		const isFavorite = currentUser && currentUser.favorites.some(s => s.storyId === story.storyId);
+		const starType = isFavorite ? 'fas' : 'far';
+
+		return ` <span class="star">
+            		<i class="${starType} fa-star"></i>
+        		</span>`;
+}
+
+//function to create delete button
+function generateDeleteButton(story) {
+	return currentUser && currentUser.ownStories
+	.some(s => s.storyId === story.storyId) ? `<button class='delete-btn'><i class="fa-solid fa-trash-can"></i></button>` : '';
+}
+
 function generateStoryMarkup(story) {
-	// console.debug("generateStoryMarkup", story);
+	console.debug("generateStoryMarkup");
 
 	const hostName = story.getHostName();
-	const likeButton = currentUser ? `<button class='like-btn'><i class="fa-regular fa-star"></i></button>` : ''; //adding likeing ability only when you're signed in
-	const deleteButton = currentUser && currentUser.ownStories
-	.some(s => s.storyId === story.storyId) ? `<button class='delete-btn'><i class="fa-solid fa-trash-can"></i></button>'` : '';
+	const likeButton = generateLikeButton(story);
+	const deleteButton = generateDeleteButton(story);
 
 	return $(`
       <li id="${story.storyId}">
@@ -33,10 +48,9 @@ function generateStoryMarkup(story) {
         <a href="${story.url}" target="a_blank" class="story-link">
           ${story.title}
         </a>
-        <small class="story-hostname">(${hostName})</small>
+        <small class="story-hostname">(${hostName})</small>${deleteButton}
         <small class="story-author">by ${story.author}</small>
         <small class="story-user">posted by ${story.username}</small>
-		${deleteButton}
       </li>
     `);
 }
@@ -56,31 +70,29 @@ function putStoriesOnPage() {
 	//hiding favStoriesList
 	const favStoriesList = document.querySelector('#favorite-stories-list');
 	favStoriesList.style.display = 'none';
+
 	$allStoriesList.show();
 }
 
+async function putFavsOnPage() {
+	console.debug('putFavsOnPage');
 
+	$favStoriesList.empty();
 
-//function to delete a Story
-async function deleteStory(e) {
-	const closestLi = e.target.closest('li'); //targeting the li
-	const storyId = closestLi.id
+	await currentUser.populateFavorites();
 
-	try {
-		await storyList.removeStory(currentUser, storyId);
-		closestLi.remove();
-	//updates the storylist immidiatly
-		await putStoriesOnPage();
-	} catch (error) {
-		 console.error('Error deleting story:', error);
-		 alert('Error deleting story');
-	}
+	$favStoriesList.show();
 }
 
+function putOwnStoriesOnPage() {
+	console.debug('putOwnStoriesOnPage');
 
+	$ownStoriesList.empty();
 
+	loadFavoritesFromLocalStorage();
 
-
+	$ownStoriesList.show();
+}
 
 //this function calls on addStory from models.js
 //and then appends the story to the page
@@ -89,10 +101,6 @@ async function storyFormSubmit() {
 	const author = document.querySelector("#author").value; // creating variables of the forms inputs
 	const title = document.querySelector("#title").value;
 	const url = document.querySelector("#url-input").value;
-
-	console.log(author);
-	console.log(title);
-	console.log(url);
 
 	try {
 		const newStory = await storyList.addStory(currentUser, {
@@ -105,11 +113,9 @@ async function storyFormSubmit() {
 
 		if (newStory) {
 			// if newStory is created properly then add it to the page
-			const storiesContainer = document.querySelector(
-				"#all-stories-list"
-			);
 			const storyElement = generateStoryMarkup(newStory)[0];
-			storiesContainer.appendChild(storyElement);
+			$allStoriesList.append(storyElement);
+			putStoriesOnPage();
 		} else {
 			alert("Failed to add story");
 		}
@@ -118,6 +124,7 @@ async function storyFormSubmit() {
 		alert("Error adding story");
 	}
 }
+//button event listeners are added here so that they are after the code where the buttons are created
 //attaching the eventlistener to the form button
 
 const submitButton =
@@ -125,56 +132,105 @@ const submitButton =
 
 submitButton.addEventListener("click", async (e) => {
 	e.preventDefault();
-
+	$(".story-form-container").css('display', 'none');
 	await storyFormSubmit();
+
+	document.querySelector('#author').value = '';
+	document.querySelector('#title').value = '';
+	document.querySelector('#url-input').value = '';
 });
 
-//button event listeners are added here so that they are after the code where the buttons are created
+	//Add eventlistener to like star
+	async function toggleStoryFavorite(e) {
+		console.debug("toggleStoryFavorite");
+	  
+		const $tgt = $(e.target);
+		const $closestLi = $tgt.closest("li");
+		const storyId = $closestLi.attr("id");
+	  
+		const starIcon = $tgt.hasClass("fas") ? $tgt : $tgt.find("i");
+		const starType = starIcon.hasClass("fas") ? "fas" : "far";
+	  
+		try {
+		  if (starType === "far") {
+			await currentUser.likeStory(storyId);
+			starIcon.toggleClass("fas far");
+		  } else {
+			await currentUser.unlikeStory(storyId);
+			starIcon.toggleClass("fas far");
+		  }
 
-document.addEventListener('DOMContentLoaded', () => {
-	//Add eventlistner to like star
-	document.addEventListener('click', async (event) => {
-		if (event.target.classList.contains('like-btn')) {
-			const $storyLi = $(event.target).closest('li');
-			const storyId = $storyLi.attr('id');
-			const isLiked = $storyLi.hasClass('liked');
-	
-			try {
-				if (isLiked) {
-					console.log('unliked');
-					await currentUser.unlikeStory(storyId);
-					$storyLi.removeClass('liked');
-				} else {
-					console.log('liked')
-					await currentUser.likeStory(storyId);
-					$storyLi.addClass('liked');
-				}
-			} catch (error) {
-				console.error('Error toggling story like:', error);
-				alert('Error toggling story like');
-			}
+		  //check which list the user is viewing to reload that specific one
+		  if ($favStoriesList.is(":visible")) {
+			await putFavsOnPage();
+		  } else {
+			putStoriesOnPage();
+		  }
+		} catch (error) {
+		  console.error("Error toggling story favorite:", error);
 		}
-	});
-	
+	  }
+	  
+	  $allStoriesList.on("click", ".star", toggleStoryFavorite);
+	  $favStoriesList.on("click", ".star", toggleStoryFavorite);
+	  
 	
 
+	// Add eventlistener to delete button
+	async function deleteStory(e) {
+		console.debug('deleteStory');
+
+		try {
+		const $tgt = $(e.target);
+		const $closestLi = $tgt.closest("li");
+		const storyId = $closestLi.attr("id");
+
+		await storyList.removeStory(currentUser, storyId);
+
+		//check which list is being displayed and then reload that list
+		if ($ownStoriesList.is(":visible")) {
+			showUserStories();
+		} else {
+			putStoriesOnPage();
+		}
+		} catch (error) {
+			console.error('Error deleting story:', error);
+		}
+	}
+
+	$allStoriesList.on('click', '.delete-btn', deleteStory);
+	$ownStoriesList.on('click', '.delete-btn', deleteStory);
 
 	// Add event listener to "Favorites" link
     const favoritesLink = document.getElementById('favorites');
-    const allStories = document.querySelector('#all-stories-list');
-	const favStoriesList = document.querySelector('#favorite-stories-list');
-
-    if (!favoritesLink) return;
 
     favoritesLink.addEventListener('click', async (e) => {
 		e.preventDefault()
-		console.log('favorites link clicked');
-		//show ol
-		favStoriesList.style.display = 'block';
-        // Hide the current content in the stories container
-        allStories.style.display = 'none';
+		//hide everything first
+		hidePageComponents();
+		//hide delete buttons in the favorites link
+		setTimeout(function() {
+			$('.delete-btn').hide();
+		}, 10);
 
         // Populate the stories list with favorite stories
-        currentUser.populateFavorites(favStoriesList);
+        await currentUser.populateFavorites($favStoriesList);
     });
-});
+
+	//function to show userStories when nav link is clicked
+async function showUserStories() {
+	hidePageComponents();
+	//hide like star and therefore the ability to like and unlike stories
+	setTimeout(function() {
+		$('.star').hide();
+	}, 10);
+	putOwnStoriesOnPage();
+	const ownStories = currentUser.ownStories;
+  
+	ownStories.forEach(story => {
+	  const storyMarkup = generateStoryMarkup(story);
+	  $ownStoriesList.append(storyMarkup[0]);
+	});
+  }
+  
+  $userStories.on('click', showUserStories);
