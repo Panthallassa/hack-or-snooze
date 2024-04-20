@@ -57,7 +57,7 @@ class StoryList {
 		//  **not** an instance method. Rather, it is a method that is called on the
 		//  class directly. Why doesn't it make sense for getStories to be an
 		//  instance method?
-
+		try {
 		// query the /stories endpoint (no auth required)
 		const response = await axios({
 			url: `${BASE_URL}/stories`,
@@ -71,6 +71,10 @@ class StoryList {
 
 		// build an instance of our own class using the new array of stories
 		return new StoryList(stories);
+		} catch (error) {
+			console.error("Error getting sotries:", error);
+			return null;
+		}
 	}
 
 	// 	/** Adds story data to API, makes a Story instance, adds it to story list.
@@ -98,9 +102,11 @@ class StoryList {
 					},
 				}),
 			});
+
 			if (!res.ok) {
 				throw new Error("Failed to add story");
 			}
+
 			const data = await res.json();
 			const newStory = new Story(data.story);
 
@@ -118,6 +124,7 @@ class StoryList {
 	}
 	//function to delete a story
 	async removeStory(user, storyId) {
+		try {
 		await axios({
 			url: `${BASE_URL}/stories/${storyId}`,
 			method: "DELETE",
@@ -134,6 +141,9 @@ class StoryList {
 		let ownStories = JSON.parse(localStorage.getItem('ownStories')) || [];
 		ownStories = ownStories.filter(story => story.storyId !== storyId);
 		localStorage.setItem('ownStories', JSON.stringify(ownStories));
+		} catch (error) {
+			console.error('Error removing story:', error);
+		}
 	}
 }
 
@@ -160,14 +170,13 @@ class User {
 		this.username = username;
 		this.name = name;
 		this.createdAt = createdAt;
-
 		// instantiate Story instances for the user's favorites and ownStories
 		this.favorites = favorites.map((s) => new Story(s));
 		this.ownStories = ownStories.map((s) => new Story(s));
-
 		// store the login token on the user so it's easy to find for API calls.
 		this.loginToken = token;
 	}
+
 	// function to add a liked story to favorites
 	async likeStory(storyId) {
 		try {
@@ -191,24 +200,23 @@ class User {
 			return likedStory;
 		} catch (error) {
 			console.error("Error liking story:", error);
-			alert("Error liking story");
 		}
 	}
 	//function to remove a story from favorites
 	async unlikeStory(storyId) {
 		try {
-			await axios.delete(
-				`https://private-anon-b99573ba85-hackorsnoozev3.apiary-mock.com/users/${this.username}/favorites/${storyId}`,
-				{
-					headers: {
-						"token": this.loginToken,
-					},
-				}
-			);
+			await axios({
+				url: `https://private-anon-0eef7caaa9-hackorsnoozev3.apiary-mock.com/users/${this.username}/favorites/${storyId}`,
+				method: "DELETE",
+				headers: {
+				  "token": this.loginToken,
+				},
+			  });
+			  
 			const index = this.favorites.findIndex(
 				(story) => story.storyId === storyId
 			);
-			//if the story is in the map
+			//if the story is in the map then remove it
 			if (index !== -1) {
 				this.favorites.splice(index, 1);
 			}
@@ -216,22 +224,25 @@ class User {
 			localStorage.setItem('favorites', JSON.stringify(this.favorites));
 		} catch (error) {
 			console.error("Error unliking story:", error);
-			alert("Error unliking story");
 		}
 	}
 
 	//this is a function to populate the stories container with favorites
 	async populateFavorites() {
-		console.debug("populateFavorites");
+		try {
+			console.debug("populateFavorites");
 
-		hidePageComponents();
-		$favStoriesList.empty();
-		$favStoriesList.show();
+			hidePageComponents();
+			$favStoriesList.empty();
+			$favStoriesList.show();
 
-		currentUser.favorites.forEach((favorite) => {
+			currentUser.favorites.forEach((favorite) => {
 			const storyMarkup = generateStoryMarkup(favorite);
 			$favStoriesList.append(storyMarkup[0])
-		})
+			});
+		} catch (error) {
+			console.error('Error populating favorites:', error);
+		}
 	}
 
 	//remove stories from ownStories Map
@@ -265,24 +276,29 @@ class User {
 	 */
 
 	static async signup(username, password, name) {
-		const response = await axios({
-			url: `${BASE_URL}/signup`,
-			method: "POST",
-			data: { user: { username, password, name } },
-		});
+		try {
+			const response = await axios({
+				url: `${BASE_URL}/signup`,
+				method: "POST",
+				data: { user: { username, password, name } },
+			});
 
-		let { user } = response.data;
+			let { user } = response.data;
 
-		return new User(
-			{
-				username: user.username,
-				name: user.name,
-				createdAt: user.createdAt,
-				favorites: user.favorites,
-				ownStories: user.stories,
-			},
-			response.data.token
-		);
+			return new User(
+				{
+					username: user.username,
+					name: user.name,
+					createdAt: user.createdAt,
+					favorites: user.favorites,
+					ownStories: user.stories,
+				},
+				response.data.token
+			);
+		} catch (error) {
+			console.error('Signup failed:', error);
+			return null;
+		}
 	}
 
 	/** Login in user with API, make User instance & return it.
@@ -292,24 +308,29 @@ class User {
    */
 
 	static async login(username, password) {
-		const response = await axios({
-			url: `${BASE_URL}/login`,
-			method: "POST",
-			data: { user: { username, password } },
-		});
+		try {
+			const response = await axios({
+				url: `${BASE_URL}/login`,
+				method: "POST",
+				data: { user: { username, password } },
+			});
 
-		let { user } = response.data;
+			let { user } = response.data;
 
-		return new User(
-			{
-				username: user.username,
-				name: user.name,
-				createdAt: user.createdAt,
-				favorites: user.favorites,
-				ownStories: user.stories,
-			},
-			response.data.token
-		);
+			return new User(
+				{
+					username: user.username,
+					name: user.name,
+					createdAt: user.createdAt,
+					favorites: user.favorites,
+					ownStories: user.stories,
+				},
+				response.data.token
+			);
+		} catch (error) {
+			console.error("Login falied:", error);
+			return null;
+		}
 	}
 
 	/** When we already have credentials (token & username) for a user,
@@ -336,21 +357,38 @@ class User {
 				},
 				token
 			);
-		} catch (err) {
+		} catch (error) {
 			console.error(
 				"loginViaStoredCredentials failed",
-				err
+				error
 			);
 			return null;
 		}
 	}	
 }
+// I added these function here so that they are loaded first in the code 
 function loadFavoritesFromLocalStorage() {
-	const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-	return favorites.map((s) => new Story(s));
-  }
+    try {
+        const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+		//making sure to return a valid object with a storyId
+        return favorites
+            .filter(s => s && typeof s === 'object' && 'storyId' in s)
+            .map((s) => new Story(s));
+    } catch (error) {
+        console.error('Error loading favorites from local storage:', error);
+        return [];
+    }
+}
+
 
 function loadOwnStoriesFromLocalStorage() {
-    const ownStories = JSON.parse(localStorage.getItem('ownStories')) || [];
-    return ownStories.map((s) => new Story(s));
+    try {
+        const ownStories = JSON.parse(localStorage.getItem('ownStories')) || [];
+        return ownStories
+            .filter(s => s && typeof s === 'object' && 'storyId' in s)
+            .map((s) => new Story(s));
+    } catch (error) {
+        console.error('Error loading own stories from local storage:', error);
+        return [];
+    }
 }

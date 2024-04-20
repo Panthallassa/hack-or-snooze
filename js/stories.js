@@ -8,7 +8,6 @@ let storyList;
 async function getAndShowStoriesOnStart() {
 	storyList = await StoryList.getStories();
 	$storiesLoadingMsg.remove();
-
 	putStoriesOnPage();
 }
 
@@ -18,22 +17,6 @@ async function getAndShowStoriesOnStart() {
  *
  * Returns the markup for the story.
  */
-
-//function to create like button
-function generateLikeButton(story) {
-		const isFavorite = currentUser && currentUser.favorites.some(s => s.storyId === story.storyId);
-		const starType = isFavorite ? 'fas' : 'far';
-
-		return ` <span class="star">
-            		<i class="${starType} fa-star"></i>
-        		</span>`;
-}
-
-//function to create delete button
-function generateDeleteButton(story) {
-	return currentUser && currentUser.ownStories
-	.some(s => s.storyId === story.storyId) ? `<button class='delete-btn'><i class="fa-solid fa-trash-can"></i></button>` : '';
-}
 
 function generateStoryMarkup(story) {
 	console.debug("generateStoryMarkup");
@@ -55,6 +38,22 @@ function generateStoryMarkup(story) {
     `);
 }
 
+//function to create like button
+function generateLikeButton(story) {
+	const isFavorite = currentUser && currentUser.favorites.some(s => s.storyId === story.storyId);
+	const starType = isFavorite ? 'fas' : 'far';
+
+	return ` <span class="star">
+            	<i class="${starType} fa-star"></i>
+        	</span>`;
+}
+
+//function to create delete button
+function generateDeleteButton(story) {
+	return currentUser && currentUser.ownStories
+	.some(s => s.storyId === story.storyId) ? `<button class='delete-btn'><i class="fa-solid fa-trash-can"></i></button>` : '';
+}
+
 /** Gets list of stories from server, generates their HTML, and puts on page. */
 
 function putStoriesOnPage() {
@@ -67,12 +66,31 @@ function putStoriesOnPage() {
 		const $story = generateStoryMarkup(story);
 		$allStoriesList.append($story);
 	}
+
 	//hiding favStoriesList
 	const favStoriesList = document.querySelector('#favorite-stories-list');
 	favStoriesList.style.display = 'none';
 
 	$allStoriesList.show();
 }
+/******************************************************************************
+ * Event Listeners
+ */
+
+//attaching the eventlistener to the form button
+
+const submitButton =
+	document.getElementById("story-submit");
+
+submitButton.addEventListener("click", async (e) => {
+	e.preventDefault();
+	$(".story-form-container").css('display', 'none');
+	await storyFormSubmit();
+
+	document.querySelector('#author').value = '';
+	document.querySelector('#title').value = '';
+	document.querySelector('#url-input').value = '';
+});
 
 async function putFavsOnPage() {
 	console.debug('putFavsOnPage');
@@ -124,22 +142,6 @@ async function storyFormSubmit() {
 		alert("Error adding story");
 	}
 }
-//button event listeners are added here so that they are after the code where the buttons are created
-//attaching the eventlistener to the form button
-
-const submitButton =
-	document.getElementById("story-submit");
-
-submitButton.addEventListener("click", async (e) => {
-	e.preventDefault();
-	$(".story-form-container").css('display', 'none');
-	await storyFormSubmit();
-
-	document.querySelector('#author').value = '';
-	document.querySelector('#title').value = '';
-	document.querySelector('#url-input').value = '';
-});
-
 	//Add eventlistener to like star
 	async function toggleStoryFavorite(e) {
 		console.debug("toggleStoryFavorite");
@@ -201,23 +203,23 @@ submitButton.addEventListener("click", async (e) => {
 	$allStoriesList.on('click', '.delete-btn', deleteStory);
 	$ownStoriesList.on('click', '.delete-btn', deleteStory);
 
-	// Add event listener to "Favorites" link
-    const favoritesLink = document.getElementById('favorites');
+// Add event listener to "Favorites" link
+ const favoritesLink = document.getElementById('favorites');
 
-    favoritesLink.addEventListener('click', async (e) => {
-		e.preventDefault()
-		//hide everything first
-		hidePageComponents();
-		//hide delete buttons in the favorites link
-		setTimeout(function() {
-			$('.delete-btn').hide();
-		}, 10);
+favoritesLink.addEventListener('click', async (e) => {
+	e.preventDefault()
+	//hide everything first
+	hidePageComponents();
+	//hide delete buttons in the favorites link
+	setTimeout(function() {
+		$('.delete-btn').hide();
+	}, 10);
 
-        // Populate the stories list with favorite stories
-        await currentUser.populateFavorites($favStoriesList);
-    });
+    // Populate the stories list with favorite stories
+    await currentUser.populateFavorites($favStoriesList);
+});
 
-	//function to show userStories when nav link is clicked
+//function to show userStories when nav link is clicked
 async function showUserStories() {
 	hidePageComponents();
 	//hide like star and therefore the ability to like and unlike stories
@@ -231,6 +233,6 @@ async function showUserStories() {
 	  const storyMarkup = generateStoryMarkup(story);
 	  $ownStoriesList.append(storyMarkup[0]);
 	});
-  }
+}
   
-  $userStories.on('click', showUserStories);
+$userStories.on('click', showUserStories);

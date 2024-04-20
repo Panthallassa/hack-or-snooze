@@ -3,7 +3,6 @@
 // So we don't have to keep re-finding things on page, find DOM elements once:
 
 const $body = $("body");
-
 const $storiesLoadingMsg = $("#stories-loading-msg");
 const $allStoriesList = $("#all-stories-list");
 //added favStoriesList
@@ -16,7 +15,6 @@ const $storyContainer = $('.stories-container');
 const $storyForm = $('.story-form-container');
 const $loginForm = $("#login-form");
 const $signupForm = $("#signup-form");
-
 const $navLogin = $("#nav-login");
 //added userStories
 const $userStories = $('#my-stories');
@@ -30,36 +28,36 @@ const $navLogOut = $("#nav-logout");
  */
 
 function hidePageComponents() {
-  const components = [
-    //added more components
-    $storyForm,
-    $ownStoriesList,
-    $favStoriesList,
-    $allStoriesList,
-    $loginForm,
-    $signupForm,
-  ];
+    const components = [
+      //added more components
+      $storyForm,
+      $ownStoriesList,
+      $favStoriesList,
+      $allStoriesList,
+      $loginForm,
+      $signupForm,
+    ];
   components.forEach(c => c.hide());
 }
 
 /** Overall function to kick off the app. */
 
 async function start() {
-  console.debug("start");
+    console.debug("start");
 
-  // "Remember logged-in user" and log in, if credentials in localStorage
-  await checkForRememberedUser();
-  await getAndShowStoriesOnStart();
+    // "Remember logged-in user" and log in, if credentials in localStorage
+    await checkForRememberedUser();
+    await getAndShowStoriesOnStart();
 
-  //load favorites from local storage
-  const currentUserFavorites = loadFavoritesFromLocalStorage();
-  const currentOwnStories = loadOwnStoriesFromLocalStorage();
+    //load favorites from local storage
+    const currentUserFavorites = loadFavoritesFromLocalStorage();
+    const currentOwnStories = loadOwnStoriesFromLocalStorage();
 
-  // if we got a logged-in user
-  if (currentUser) {
-    //initialize user favorites
-    if (currentUserFavorites.length > 0) {
-    currentUser.favorites = currentUserFavorites;
+    // if we got a logged-in user
+    if (currentUser) {
+      //initialize user favorites
+      if (currentUserFavorites.length > 0) {
+      currentUser.favorites = currentUserFavorites;
     }
     //initalize own stories
     if (currentOwnStories.length > 0) {
