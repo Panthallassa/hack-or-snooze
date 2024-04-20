@@ -56,6 +56,10 @@ async function signup(evt) {
 	// which we'll make the globally-available, logged-in user.
 	currentUser = await User.signup(username, password, name);
 
+	//fixing display issues
+	$('.nav-left').css('display', 'block');
+	$storyContainer.show();
+
 	saveUserCredentialsInLocalStorage();
 	updateUIOnUserLogin();
 
